@@ -1,4 +1,6 @@
 import { users, apps, type User, type InsertUser, type App, type InsertApp } from "@shared/schema";
+import { db } from "./db";
+import { eq } from "drizzle-orm";
 
 export interface IStorage {
   getUser(id: number): Promise<User | undefined>;
@@ -7,6 +9,44 @@ export interface IStorage {
   getAllApps(): Promise<App[]>;
   getAppsByCategory(category: string): Promise<App[]>;
   searchApps(query: string): Promise<App[]>;
+}
+
+export class DatabaseStorage implements IStorage {
+  async getUser(id: number): Promise<User | undefined> {
+    const [user] = await db.select().from(users).where(eq(users.id, id));
+    return user || undefined;
+  }
+
+  async getUserByUsername(username: string): Promise<User | undefined> {
+    const [user] = await db.select().from(users).where(eq(users.username, username));
+    return user || undefined;
+  }
+
+  async createUser(insertUser: InsertUser): Promise<User> {
+    const [user] = await db
+      .insert(users)
+      .values(insertUser)
+      .returning();
+    return user;
+  }
+
+  async getAllApps(): Promise<App[]> {
+    return await db.select().from(apps);
+  }
+
+  async getAppsByCategory(category: string): Promise<App[]> {
+    return await db.select().from(apps).where(eq(apps.category, category));
+  }
+
+  async searchApps(query: string): Promise<App[]> {
+    const allApps = await db.select().from(apps);
+    const lowercaseQuery = query.toLowerCase();
+    return allApps.filter(app => 
+      app.name.toLowerCase().includes(lowercaseQuery) ||
+      app.description.toLowerCase().includes(lowercaseQuery) ||
+      app.category.toLowerCase().includes(lowercaseQuery)
+    );
+  }
 }
 
 export class MemStorage implements IStorage {
@@ -156,4 +196,4 @@ export class MemStorage implements IStorage {
   }
 }
 
-export const storage = new MemStorage();
+export const storage = new DatabaseStorage();
