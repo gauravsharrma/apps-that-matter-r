@@ -1,6 +1,7 @@
 import { Pool, neonConfig } from "@neondatabase/serverless";
 import { drizzle } from "drizzle-orm/neon-serverless";
 import { migrate } from "drizzle-orm/neon-serverless/migrator";
+import path from "path";
 import ws from "ws";
 import * as schema from "@shared/schema";
 
@@ -13,7 +14,8 @@ let migrationPromise: Promise<void> | undefined;
 if (process.env.DATABASE_URL) {
   pool = new Pool({ connectionString: process.env.DATABASE_URL });
   db = drizzle({ client: pool, schema });
-  migrationPromise = migrate(db, { migrationsFolder: "./migrations" }).catch((err) => {
+  const migrationsFolder = path.resolve(process.cwd(), "migrations");
+  migrationPromise = migrate(db, { migrationsFolder }).catch((err) => {
     console.error("Migration error:", err);
   });
 } else {
