@@ -2,12 +2,31 @@ import { useQuery } from "@tanstack/react-query";
 import { type App } from "@shared/schema";
 import { Skeleton } from "@/components/ui/skeleton";
 import { getIconComponent } from "@/lib/utils";
+import { Link } from "wouter";
 import { useMemo } from "react";
 
 interface AppsGridProps {
   searchQuery: string;
   activeCategory: string;
 }
+
+const getAppUrl = (appName: string): string => {
+  const urlMap: Record<string, string> = {
+    "EMI Calculator": "/emi-calculator",
+    "BMI Calculator": "/bmi-calculator",
+    "Pomodoro Timer": "/pomodoro-timer",
+    "SIP Calculator": "/sip-calculator",
+    "Text Formatter": "/text-formatter",
+    "AI Text Extractor": "/ai-text-extractor",
+    "Color Palette Generator": "/color-palette-generator",
+    "Currency Converter": "/currency-converter",
+    "QR Code Generator": "/qr-code-generator",
+    "Water Intake Tracker": "/water-intake-tracker",
+    "AI Language Detector": "/ai-language-detector",
+    "Task Prioritizer": "/task-prioritizer"
+  };
+  return urlMap[appName] || "#";
+};
 
 export function AppsGrid({ searchQuery, activeCategory }: AppsGridProps) {
   const { data: apps, isLoading } = useQuery<App[]>({
@@ -84,10 +103,12 @@ export function AppsGrid({ searchQuery, activeCategory }: AppsGridProps) {
           {filteredApps.map((app) => {
             const IconComponent = getIconComponent(app.icon);
             return (
-              <div
+              <Link
                 key={app.id}
-                className="neumorphic app-card-hover p-8 cursor-pointer"
+                href={getAppUrl(app.name)}
+                className="block no-underline"
               >
+                <div className="neumorphic app-card-hover p-8 cursor-pointer">
                 <div className="neumorphic-inset w-16 h-16 mx-auto mb-6 flex items-center justify-center rounded-xl">
                   <IconComponent className="h-8 w-8 text-primary" />
                 </div>
@@ -102,7 +123,8 @@ export function AppsGrid({ searchQuery, activeCategory }: AppsGridProps) {
                     {app.category}
                   </span>
                 </div>
-              </div>
+                </div>
+              </Link>
             );
           })}
         </div>
