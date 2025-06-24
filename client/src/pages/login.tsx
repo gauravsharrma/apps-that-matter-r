@@ -21,7 +21,6 @@ export default function Login() {
 
   const handleLogin = () => {
     login();
-    setLocation('/');
   };
 
   return (
@@ -58,21 +57,21 @@ export default function Login() {
                 size="lg"
               >
                 <LogIn className="h-5 w-5 mr-2" />
-                Sign in with Google
+                Sign In (Demo Mode)
               </Button>
 
               <div className="neumorphic-inset p-4 rounded-lg">
-                <h4 className="font-semibold mb-2 text-sm">Why sign in?</h4>
+                <h4 className="font-semibold mb-2 text-sm">Demo Features</h4>
                 <ul className="text-xs text-muted-foreground space-y-1">
                   <li>• Customize scroll button position</li>
                   <li>• Save your app preferences</li>
-                  <li>• Sync settings across devices</li>
-                  <li>• Access advanced features</li>
+                  <li>• Access user settings page</li>
+                  <li>• Test authentication flow</li>
                 </ul>
               </div>
 
               <div className="text-center text-xs text-muted-foreground">
-                By signing in, you agree to our Terms of Service and Privacy Policy
+                Demo mode - Google OAuth integration ready for production
               </div>
             </CardContent>
           </Card>

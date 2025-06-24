@@ -65,15 +65,15 @@ export default function UserSettings() {
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="flex items-center space-x-3">
-                  {user?.picture && (
+                  {user?.profileImageUrl && (
                     <img 
-                      src={user.picture} 
-                      alt={user.name} 
+                      src={user.profileImageUrl} 
+                      alt={`${user.firstName} ${user.lastName}`} 
                       className="w-12 h-12 rounded-full object-cover"
                     />
                   )}
                   <div>
-                    <p className="font-semibold">{user?.name}</p>
+                    <p className="font-semibold">{user?.firstName} {user?.lastName}</p>
                     <p className="text-sm text-muted-foreground">{user?.email}</p>
                   </div>
                 </div>
