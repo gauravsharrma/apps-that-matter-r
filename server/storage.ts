@@ -12,10 +12,109 @@ import {
   type Trial,
   type InsertTrial,
 } from "@shared/schema";
-import { db } from "./db";
+import { db, dbReady } from "./db";
 import { eq, ilike, or, desc, and } from "drizzle-orm";
 
 const database = db!;
+
+// Sample apps used to seed the database when empty
+export const SAMPLE_APPS: Omit<InsertApp, "createdAt">[] = [
+  {
+    name: "EMI Calculator",
+    description:
+      "Calculate your monthly EMI payments for loans with detailed amortization schedule and interest breakdowns.",
+    category: "Finance",
+    icon: "calculator",
+    featured: true,
+  },
+  {
+    name: "BMI Calculator",
+    description:
+      "Calculate your Body Mass Index and get health recommendations based on WHO guidelines and standards.",
+    category: "Health",
+    icon: "heartbeat",
+    featured: true,
+  },
+  {
+    name: "SIP Calculator",
+    description:
+      "Plan your systematic investment portfolio with compound interest calculations and goal-based planning.",
+    category: "Finance",
+    icon: "chart-line",
+    featured: false,
+  },
+  {
+    name: "Text Formatter",
+    description:
+      "Format, clean, and transform text with multiple options including case conversion and special character handling.",
+    category: "Utilities",
+    icon: "file-alt",
+    featured: false,
+  },
+  {
+    name: "Color Palette Generator",
+    description:
+      "Generate beautiful color palettes for your design projects with accessibility and contrast checking.",
+    category: "Utilities",
+    icon: "palette",
+    featured: false,
+  },
+  {
+    name: "Pomodoro Timer",
+    description:
+      "Boost productivity with customizable focus sessions, break reminders, and detailed time tracking analytics.",
+    category: "Productivity",
+    icon: "clock",
+    featured: false,
+  },
+  {
+    name: "Currency Converter",
+    description:
+      "Convert between global currencies with real-time exchange rates and historical trend analysis.",
+    category: "Finance",
+    icon: "coins",
+    featured: false,
+  },
+  {
+    name: "QR Code Generator",
+    description:
+      "Generate QR codes for URLs, text, WiFi passwords, and more with customizable styling options.",
+    category: "Utilities",
+    icon: "qrcode",
+    featured: false,
+  },
+  {
+    name: "Water Intake Tracker",
+    description:
+      "Track daily water consumption with personalized goals, reminders, and hydration insights.",
+    category: "Health",
+    icon: "tint",
+    featured: false,
+  },
+  {
+    name: "AI Prompt Generator",
+    description:
+      "Generate comprehensive prompt settings for ChatGPT, Gemini, and other LLMs with 20+ customizable parameters.",
+    category: "AI Tools",
+    icon: "robot",
+    featured: true,
+  },
+  {
+    name: "Post-it Notes",
+    description:
+      "Create, organize, and manage digital sticky notes with tags, colors, and timestamps for better productivity.",
+    category: "Productivity",
+    icon: "sticky-note",
+    featured: true,
+  },
+  {
+    name: "Trial Tracker",
+    description: "Keep track of free trials with reminders before they expire.",
+    category: "Productivity",
+    icon: "clock",
+    featured: false,
+  },
+];
 
 // Interface for storage operations
 export interface IStorage {
@@ -43,6 +142,22 @@ export interface IStorage {
 }
 
 export class DatabaseStorage implements IStorage {
+  public initPromise: Promise<void>;
+
+  constructor() {
+    this.initPromise = this.init();
+  }
+
+  private async init() {
+    // Ensure migrations have run before seeding
+    await dbReady;
+
+    const existing = await database.select().from(apps).limit(1);
+    if (existing.length === 0) {
+      await database.insert(apps).values(SAMPLE_APPS);
+    }
+  }
+
   // User operations
   // (IMPORTANT) these user operations are mandatory for Replit Auth.
 
@@ -459,10 +574,15 @@ export class MemStorage implements IStorage {
 }
 
 let storage: IStorage;
+let storageInitPromise: Promise<void>;
 if (db) {
-  storage = new DatabaseStorage();
+  const dbStorage = new DatabaseStorage();
+  storage = dbStorage;
+  storageInitPromise = dbStorage.initPromise;
 } else {
-  storage = new MemStorage();
+  const mem = new MemStorage();
+  storage = mem;
+  storageInitPromise = Promise.resolve();
 }
 
-export { storage };
+export { storage, storageInitPromise };

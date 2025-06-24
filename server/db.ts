@@ -8,15 +8,17 @@ neonConfig.webSocketConstructor = ws;
 
 let pool: Pool | undefined;
 let db: ReturnType<typeof drizzle> | undefined;
+let migrationPromise: Promise<void> | undefined;
 
 if (process.env.DATABASE_URL) {
   pool = new Pool({ connectionString: process.env.DATABASE_URL });
   db = drizzle({ client: pool, schema });
-  migrate(db, { migrationsFolder: "./migrations" }).catch((err) => {
+  migrationPromise = migrate(db, { migrationsFolder: "./migrations" }).catch((err) => {
     console.error("Migration error:", err);
   });
 } else {
   console.warn("DATABASE_URL not set. Falling back to in-memory storage.");
+  migrationPromise = Promise.resolve();
 }
 
-export { pool, db };
+export { pool, db, migrationPromise as dbReady };
