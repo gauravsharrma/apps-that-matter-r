@@ -293,8 +293,15 @@ export class MemStorage implements IStorage {
         category: "Productivity",
         icon: "sticky-note",
         featured: true
-@@ -239,94 +351,105 @@ export class MemStorage implements IStorage {
+      },
+    ];
 
+    sampleApps.forEach(app => {
+      const id = this.currentAppId++;
+      this.apps.set(id, { ...app, id, createdAt: new Date() });
+    });
+  }
+  
   async getUserNotes(userId: string): Promise<Note[]> {
     return Array.from(this.notes.values())
       .filter(note => note.userId === userId)
