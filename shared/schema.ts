@@ -46,12 +46,31 @@ export const apps = pgTable("apps", {
   createdAt: timestamp("created_at").defaultNow(),
 });
 
+export const notes = pgTable("notes", {
+  id: serial("id").primaryKey(),
+  userId: varchar("user_id").notNull(),
+  title: varchar("title", { length: 200 }).notNull(),
+  content: text("content").notNull(),
+  tags: varchar("tags").array().default([]),
+  backgroundColor: varchar("background_color", { length: 7 }).default("#fef3c7"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
 export const insertAppSchema = createInsertSchema(apps).omit({
   id: true,
   createdAt: true,
+});
+
+export const insertNoteSchema = createInsertSchema(notes).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
 });
 
 export type UpsertUser = typeof users.$inferInsert;
 export type User = typeof users.$inferSelect;
 export type InsertApp = z.infer<typeof insertAppSchema>;
 export type App = typeof apps.$inferSelect;
+export type InsertNote = z.infer<typeof insertNoteSchema>;
+export type Note = typeof notes.$inferSelect;

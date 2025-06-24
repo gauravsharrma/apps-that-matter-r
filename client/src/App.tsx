@@ -20,6 +20,7 @@ import TextFormatter from "@/pages/text-formatter";
 import ColorPaletteGenerator from "@/pages/color-palette-generator";
 import WaterIntakeTracker from "@/pages/water-intake-tracker";
 import AIPromptGenerator from "@/pages/ai-prompt-generator";
+import PostItNotes from "@/pages/post-it-notes";
 
 function AppContent() {
   const { settings } = useUserSettings();
@@ -40,6 +41,7 @@ function AppContent() {
         <Route path="/color-palette-generator" component={ColorPaletteGenerator} />
         <Route path="/water-intake-tracker" component={WaterIntakeTracker} />
         <Route path="/ai-prompt-generator" component={AIPromptGenerator} />
+        <Route path="/post-it-notes" component={PostItNotes} />
         <Route component={NotFound} />
       </Switch>
       <ScrollNavigation position={settings.scrollButtonPosition} />

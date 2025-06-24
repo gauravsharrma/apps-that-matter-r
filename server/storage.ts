@@ -1,13 +1,16 @@
 import {
   users,
   apps,
+  notes,
   type User,
   type UpsertUser,
   type App,
   type InsertApp,
+  type Note,
+  type InsertNote,
 } from "@shared/schema";
 import { db } from "./db";
-import { eq, ilike, or } from "drizzle-orm";
+import { eq, ilike, or, desc, and } from "drizzle-orm";
 
 // Interface for storage operations
 export interface IStorage {
@@ -19,6 +22,14 @@ export interface IStorage {
   getAllApps(): Promise<App[]>;
   getAppsByCategory(category: string): Promise<App[]>;
   searchApps(query: string): Promise<App[]>;
+  // Note operations
+  getUserNotes(userId: string): Promise<Note[]>;
+  getNote(id: number, userId: string): Promise<Note | undefined>;
+  createNote(note: InsertNote): Promise<Note>;
+  updateNote(id: number, userId: string, updates: Partial<InsertNote>): Promise<Note>;
+  deleteNote(id: number, userId: string): Promise<void>;
+  searchUserNotes(userId: string, query: string): Promise<Note[]>;
+  getUserTags(userId: string): Promise<string[]>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -63,6 +74,79 @@ export class DatabaseStorage implements IStorage {
           ilike(apps.description, `%${query}%`)
         )
       );
+  }
+
+  // Note operations
+  async getUserNotes(userId: string): Promise<Note[]> {
+    return await db
+      .select()
+      .from(notes)
+      .where(eq(notes.userId, userId))
+      .orderBy(desc(notes.updatedAt));
+  }
+
+  async getNote(id: number, userId: string): Promise<Note | undefined> {
+    const [note] = await db
+      .select()
+      .from(notes)
+      .where(and(eq(notes.id, id), eq(notes.userId, userId)));
+    return note;
+  }
+
+  async createNote(note: InsertNote): Promise<Note> {
+    const [newNote] = await db
+      .insert(notes)
+      .values({
+        ...note,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      })
+      .returning();
+    return newNote;
+  }
+
+  async updateNote(id: number, userId: string, updates: Partial<InsertNote>): Promise<Note> {
+    const [updatedNote] = await db
+      .update(notes)
+      .set({
+        ...updates,
+        updatedAt: new Date(),
+      })
+      .where(and(eq(notes.id, id), eq(notes.userId, userId)))
+      .returning();
+    return updatedNote;
+  }
+
+  async deleteNote(id: number, userId: string): Promise<void> {
+    await db
+      .delete(notes)
+      .where(and(eq(notes.id, id), eq(notes.userId, userId)));
+  }
+
+  async searchUserNotes(userId: string, query: string): Promise<Note[]> {
+    return await db
+      .select()
+      .from(notes)
+      .where(
+        and(
+          eq(notes.userId, userId),
+          or(
+            ilike(notes.title, `%${query}%`),
+            ilike(notes.content, `%${query}%`)
+          )
+        )
+      )
+      .orderBy(desc(notes.updatedAt));
+  }
+
+  async getUserTags(userId: string): Promise<string[]> {
+    const userNotes = await db
+      .select({ tags: notes.tags })
+      .from(notes)
+      .where(eq(notes.userId, userId));
+    
+    const allTags = userNotes.flatMap(note => note.tags || []);
+    return [...new Set(allTags)];
   }
 }
 
@@ -151,6 +235,13 @@ export class MemStorage implements IStorage {
         category: "AI Tools",
         icon: "robot",
         featured: true
+      },
+      {
+        name: "Post-it Notes",
+        description: "Create, organize, and manage digital sticky notes with tags, colors, and timestamps for better productivity.",
+        category: "Productivity",
+        icon: "sticky-note",
+        featured: true
       }
     ];
 
@@ -191,6 +282,72 @@ export class MemStorage implements IStorage {
       app.description.toLowerCase().includes(lowercaseQuery) ||
       app.category.toLowerCase().includes(lowercaseQuery)
     );
+  }
+
+  // Note operations for memory storage
+  private notes: Map<number, Note> = new Map();
+  private currentNoteId: number = 1;
+
+  async getUserNotes(userId: string): Promise<Note[]> {
+    return Array.from(this.notes.values())
+      .filter(note => note.userId === userId)
+      .sort((a, b) => new Date(b.updatedAt!).getTime() - new Date(a.updatedAt!).getTime());
+  }
+
+  async getNote(id: number, userId: string): Promise<Note | undefined> {
+    const note = this.notes.get(id);
+    return note && note.userId === userId ? note : undefined;
+  }
+
+  async createNote(noteData: InsertNote): Promise<Note> {
+    const id = this.currentNoteId++;
+    const note: Note = {
+      ...noteData,
+      id,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    };
+    this.notes.set(id, note);
+    return note;
+  }
+
+  async updateNote(id: number, userId: string, updates: Partial<InsertNote>): Promise<Note> {
+    const existingNote = this.notes.get(id);
+    if (!existingNote || existingNote.userId !== userId) {
+      throw new Error('Note not found');
+    }
+    
+    const updatedNote: Note = {
+      ...existingNote,
+      ...updates,
+      updatedAt: new Date(),
+    };
+    this.notes.set(id, updatedNote);
+    return updatedNote;
+  }
+
+  async deleteNote(id: number, userId: string): Promise<void> {
+    const note = this.notes.get(id);
+    if (note && note.userId === userId) {
+      this.notes.delete(id);
+    }
+  }
+
+  async searchUserNotes(userId: string, query: string): Promise<Note[]> {
+    const lowercaseQuery = query.toLowerCase();
+    return Array.from(this.notes.values())
+      .filter(note => 
+        note.userId === userId &&
+        (note.title.toLowerCase().includes(lowercaseQuery) ||
+         note.content.toLowerCase().includes(lowercaseQuery))
+      )
+      .sort((a, b) => new Date(b.updatedAt!).getTime() - new Date(a.updatedAt!).getTime());
+  }
+
+  async getUserTags(userId: string): Promise<string[]> {
+    const userNotes = Array.from(this.notes.values()).filter(note => note.userId === userId);
+    const allTags = userNotes.flatMap(note => note.tags || []);
+    return [...new Set(allTags)];
   }
 }
 
