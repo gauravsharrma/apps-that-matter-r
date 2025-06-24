@@ -60,7 +60,7 @@ export async function setupAuth(app: Express) {
           const user = await upsertUser(profile);
           return done(null, user);
         } catch (error) {
-          return done(error as any, null);
+          return done(error as any, undefined);
         }
       },
     ),
@@ -75,7 +75,7 @@ export async function setupAuth(app: Express) {
       const user = await storage.getUser(id);
       done(null, user);
     } catch (error) {
-      done(error as any, null);
+      done(error as any, undefined);
     }
   });
 

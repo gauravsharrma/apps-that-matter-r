@@ -13,9 +13,9 @@ import {
   type InsertTrial,
 } from "@shared/schema";
 import { db } from "./db";
+import { eq, ilike, or, desc, and } from "drizzle-orm";
 
 const database = db!;
-import { eq, ilike, or, desc, and } from "drizzle-orm";
 
 // Interface for storage operations
 export interface IStorage {
@@ -210,7 +210,7 @@ export class MemStorage implements IStorage {
     this.users = new Map();
     this.apps = new Map();
     this.currentAppId = 1;
-
+    
     // Initialize with sample apps
     this.initializeApps();
   }
@@ -293,7 +293,7 @@ export class MemStorage implements IStorage {
         category: "Productivity",
         icon: "sticky-note",
         featured: true
-      },
+      }
     ];
 
     sampleApps.forEach(app => {
@@ -301,7 +301,51 @@ export class MemStorage implements IStorage {
       this.apps.set(id, { ...app, id, createdAt: new Date() });
     });
   }
-  
+
+  async getUser(id: string): Promise<User | undefined> {
+    return this.users.get(id);
+  }
+
+  async upsertUser(userData: UpsertUser): Promise<User> {
+    const user: User = {
+      ...userData,
+      email: userData.email ?? null,
+      firstName: userData.firstName ?? null,
+      lastName: userData.lastName ?? null,
+      profileImageUrl: userData.profileImageUrl ?? null,
+      createdAt: this.users.get(userData.id!)?.createdAt || new Date(),
+      updatedAt: new Date(),
+    };
+    this.users.set(userData.id!, user);
+    return user;
+  }
+
+  async getAllApps(): Promise<App[]> {
+    return Array.from(this.apps.values());
+  }
+
+  async getAppsByCategory(category: string): Promise<App[]> {
+    return Array.from(this.apps.values()).filter(app => 
+      app.category.toLowerCase() === category.toLowerCase()
+    );
+  }
+
+  async searchApps(query: string): Promise<App[]> {
+    const lowercaseQuery = query.toLowerCase();
+    return Array.from(this.apps.values()).filter(app => 
+      app.name.toLowerCase().includes(lowercaseQuery) ||
+      app.description.toLowerCase().includes(lowercaseQuery) ||
+      app.category.toLowerCase().includes(lowercaseQuery)
+    );
+  }
+
+  // Note operations for memory storage
+  private notes: Map<number, Note> = new Map();
+  private currentNoteId: number = 1;
+  // Trial operations for memory storage
+  private trials: Map<number, Trial> = new Map();
+  private currentTrialId: number = 1;
+
   async getUserNotes(userId: string): Promise<Note[]> {
     return Array.from(this.notes.values())
       .filter(note => note.userId === userId)
@@ -317,6 +361,8 @@ export class MemStorage implements IStorage {
     const id = this.currentNoteId++;
     const note: Note = {
       ...noteData,
+      tags: noteData.tags ?? [],
+      backgroundColor: noteData.backgroundColor ?? null,
       id,
       createdAt: new Date(),
       updatedAt: new Date(),
@@ -330,7 +376,7 @@ export class MemStorage implements IStorage {
     if (!existingNote || existingNote.userId !== userId) {
       throw new Error('Note not found');
     }
-
+    
     const updatedNote: Note = {
       ...existingNote,
       ...updates,
