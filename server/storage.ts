@@ -293,6 +293,13 @@ export class MemStorage implements IStorage {
         category: "Productivity",
         icon: "sticky-note",
         featured: true
+      },
+      {
+        name: "Trial Tracker",
+        description: "Keep track of free trials with reminders before they expire.",
+        category: "Productivity",
+        icon: "clock",
+        featured: false
       }
     ];
 
