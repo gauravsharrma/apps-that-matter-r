@@ -96,16 +96,20 @@ AppsThatMatter is a modern web application that showcases essential utility appl
 ## Recent Changes
 
 ✓ Built complete neomorphism-styled web application "AppsThatMatter"
-✓ Implemented app directory with 12 sample utility apps
-✓ Added search functionality across app names and descriptions  
-✓ Created category filtering system (Finance, Health, Utilities, AI Tools, Productivity)
-✓ Designed responsive grid layout with neomorphism card effects
+✓ Implemented 10 functional utility apps with real calculations and features
+✓ Added AI Prompt Settings Generator with 22+ parameters for LLM optimization
+✓ Created scroll-to-top/bottom navigation system with user customization
+✓ Implemented user authentication system and settings management
+✓ Mobile-first responsive design across all applications
 
 ## Changelog
 
 ```
 Changelog:
 - June 24, 2025. Initial setup and complete application build
+- June 24, 2025. Added functional utility apps with real calculations
+- June 24, 2025. Implemented AI Prompt Generator with 22 parameters
+- June 24, 2025. Added scroll navigation and user authentication system
 ```
 
 ## User Preferences
