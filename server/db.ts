@@ -2,10 +2,13 @@ import { Pool, neonConfig } from "@neondatabase/serverless";
 import { drizzle } from "drizzle-orm/neon-serverless";
 import { migrate } from "drizzle-orm/neon-serverless/migrator";
 import path from "path";
+import { fileURLToPath } from "url";
 import ws from "ws";
 import * as schema from "@shared/schema";
 
 neonConfig.webSocketConstructor = ws;
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 let pool: Pool | undefined;
 let db: ReturnType<typeof drizzle> | undefined;
@@ -14,7 +17,7 @@ let migrationPromise: Promise<void> | undefined;
 if (process.env.DATABASE_URL) {
   pool = new Pool({ connectionString: process.env.DATABASE_URL });
   db = drizzle({ client: pool, schema });
-  const migrationsFolder = path.resolve(process.cwd(), "migrations");
+  const migrationsFolder = path.resolve(__dirname, "../migrations");
   migrationPromise = migrate(db, { migrationsFolder }).catch((err) => {
     console.error("Migration error:", err);
   });
