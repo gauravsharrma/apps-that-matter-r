@@ -24,7 +24,8 @@ const getAppUrl = (appName: string): string => {
     "Water Intake Tracker": "/water-intake-tracker",
     "AI Language Detector": "/ai-language-detector",
     "Task Prioritizer": "/task-prioritizer",
-    "AI Prompt Generator": "/ai-prompt-generator"
+    "AI Prompt Generator": "/ai-prompt-generator",
+    "Post-it Notes": "/post-it-notes"
   };
   return urlMap[appName] || "#";
 };

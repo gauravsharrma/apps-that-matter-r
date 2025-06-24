@@ -13,6 +13,7 @@ import {
   Droplets, 
   Languages, 
   CheckSquare,
+  StickyNote,
   LucideIcon
 } from "lucide-react";
 
@@ -33,6 +34,7 @@ const iconMap: Record<string, LucideIcon> = {
   tint: Droplets,
   language: Languages,
   tasks: CheckSquare,
+  "sticky-note": StickyNote,
 };
 
 export function getIconComponent(iconName: string): LucideIcon {

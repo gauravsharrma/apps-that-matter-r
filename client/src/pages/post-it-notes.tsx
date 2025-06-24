@@ -60,17 +60,42 @@ export default function PostItNotes() {
   });
   const [tagInput, setTagInput] = useState("");
 
-  // Fetch notes
+  // Check authentication status
+  const { data: user, isLoading: authLoading } = useQuery({
+    queryKey: ["/api/auth/user"],
+    retry: false,
+  });
+
+  const isAuthenticated = !!user;
+
+  // Redirect to login if not authenticated
+  useEffect(() => {
+    if (!authLoading && !isAuthenticated) {
+      toast({
+        title: "Authentication Required",
+        description: "Please sign in to access your notes.",
+        variant: "destructive",
+      });
+      setTimeout(() => {
+        window.location.href = "/api/login";
+      }, 1000);
+      return;
+    }
+  }, [authLoading, isAuthenticated, toast]);
+
+  // Fetch notes only if authenticated
   const { data: notes = [], isLoading } = useQuery({
     queryKey: searchQuery ? ["/api/notes/search", searchQuery] : ["/api/notes"],
     queryFn: () => searchQuery 
       ? apiRequest(`/api/notes/search?q=${encodeURIComponent(searchQuery)}`)
       : apiRequest("/api/notes"),
+    enabled: isAuthenticated,
   });
 
-  // Fetch available tags for autocomplete
+  // Fetch available tags for autocomplete only if authenticated
   const { data: availableTags = [] } = useQuery({
     queryKey: ["/api/notes/tags"],
+    enabled: isAuthenticated,
   });
 
   // Create note mutation
@@ -440,7 +465,26 @@ export default function PostItNotes() {
           </div>
 
           {/* Notes Grid */}
-          {isLoading ? (
+          {authLoading ? (
+            <div className="text-center py-12">
+              <div className="neumorphic-inset w-16 h-16 mx-auto mb-4 flex items-center justify-center rounded-xl">
+                <Plus className="h-8 w-8 text-muted-foreground animate-pulse" />
+              </div>
+              <h3 className="text-lg font-semibold mb-2">Loading...</h3>
+              <p className="text-muted-foreground">Checking authentication status...</p>
+            </div>
+          ) : !isAuthenticated ? (
+            <div className="text-center py-12">
+              <div className="neumorphic-inset w-16 h-16 mx-auto mb-4 flex items-center justify-center rounded-xl">
+                <Plus className="h-8 w-8 text-muted-foreground" />
+              </div>
+              <h3 className="text-lg font-semibold mb-2">Authentication Required</h3>
+              <p className="text-muted-foreground mb-4">Please sign in to access your notes</p>
+              <Button onClick={() => window.location.href = "/api/login"} className="neumorphic-button">
+                Sign In
+              </Button>
+            </div>
+          ) : isLoading ? (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
               {[...Array(8)].map((_, i) => (
                 <div key={i} className="neumorphic h-64 animate-pulse" />
