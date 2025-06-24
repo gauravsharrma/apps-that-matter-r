@@ -227,46 +227,82 @@ export default function AIPromptGenerator() {
             <p className="text-muted-foreground">Create comprehensive prompt settings for ChatGPT, Gemini, and other LLMs</p>
           </div>
 
+          {/* Quick Actions - Mobile First */}
+          <Card className="neumorphic mb-6">
+            <CardHeader>
+              <CardTitle>Quick Actions</CardTitle>
+              <CardDescription>Common settings and controls</CardDescription>
+            </CardHeader>
+            <CardContent className="flex flex-col sm:flex-row gap-3">
+              <Button onClick={selectCommonSettings} className="neumorphic-button">
+                Load Common Settings
+              </Button>
+              <Button onClick={clearAll} variant="outline" className="neumorphic-button">
+                Clear All
+              </Button>
+              <Button onClick={generatePromptSettings} className="neumorphic-button">
+                Generate Prompt Settings
+              </Button>
+            </CardContent>
+          </Card>
+
+          {/* Generated Output - Mobile First (Top on mobile, sticky on desktop) */}
+          <Card className="neumorphic mb-6 lg:hidden">
+            <CardHeader>
+              <CardTitle>Generated Prompt Settings</CardTitle>
+              <CardDescription>Copy and paste into your LLM</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {generatedPrompt ? (
+                <>
+                  <div className="neumorphic-inset p-4 rounded-lg">
+                    <Textarea
+                      value={generatedPrompt}
+                      readOnly
+                      className="border-none bg-transparent resize-none min-h-[200px] text-xs"
+                    />
+                  </div>
+                  <Button onClick={copyPrompt} className="neumorphic-button w-full">
+                    <Copy className="h-4 w-4 mr-2" />
+                    Copy Settings
+                  </Button>
+                </>
+              ) : (
+                <div className="text-center py-6">
+                  <Bot className="h-10 w-10 mx-auto mb-3 text-muted-foreground/50" />
+                  <p className="text-muted-foreground text-sm">
+                    Select settings below and tap "Generate" to create your prompt template.
+                  </p>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
           <div className="grid lg:grid-cols-4 gap-6">
             <div className="lg:col-span-3">
-              <Card className="neumorphic mb-6">
-                <CardHeader>
-                  <CardTitle>Quick Actions</CardTitle>
-                  <CardDescription>Common settings and controls</CardDescription>
-                </CardHeader>
-                <CardContent className="flex gap-4">
-                  <Button onClick={selectCommonSettings} className="neumorphic-button">
-                    Load Common Settings
-                  </Button>
-                  <Button onClick={clearAll} variant="outline" className="neumorphic-button">
-                    Clear All
-                  </Button>
-                  <Button onClick={generatePromptSettings} className="neumorphic-button">
-                    Generate Prompt Settings
-                  </Button>
-                </CardContent>
-              </Card>
-
-              <div className="grid md:grid-cols-2 xl:grid-cols-3 gap-6">
+              {/* Settings Grid - Mobile: 1 column, Tablet: 2 columns, Desktop: 3 columns */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
                 {promptSettings.map((setting) => (
                   <Card key={setting.id} className="neumorphic">
                     <CardHeader className="pb-3">
-                      <CardTitle className="text-base">{setting.label}</CardTitle>
+                      <CardTitle className="text-sm sm:text-base">{setting.label}</CardTitle>
                     </CardHeader>
-                    <CardContent>
-                      <div className="space-y-2 max-h-48 overflow-y-auto">
+                    <CardContent className="p-4 pt-0">
+                      {/* Remove max-height and overflow, use grid for better mobile layout */}
+                      <div className="grid grid-cols-1 gap-2">
                         {setting.options.map((option) => (
-                          <div key={option} className="flex items-center space-x-2">
+                          <div key={option} className="flex items-start space-x-2 py-1">
                             <Checkbox
                               id={`${setting.id}-${option}`}
                               checked={selectedSettings[setting.id]?.includes(option) || false}
                               onCheckedChange={(checked) => 
                                 handleSettingChange(setting.id, option, checked as boolean)
                               }
+                              className="mt-0.5 flex-shrink-0"
                             />
                             <Label 
                               htmlFor={`${setting.id}-${option}`}
-                              className="text-sm cursor-pointer"
+                              className="text-xs sm:text-sm cursor-pointer leading-tight flex-1"
                             >
                               {option}
                             </Label>
@@ -279,7 +315,8 @@ export default function AIPromptGenerator() {
               </div>
             </div>
 
-            <div className="lg:col-span-1">
+            {/* Desktop Sidebar - Hidden on mobile */}
+            <div className="hidden lg:block lg:col-span-1">
               <Card className="neumorphic sticky top-24">
                 <CardHeader>
                   <CardTitle>Generated Prompt Settings</CardTitle>
@@ -330,6 +367,18 @@ export default function AIPromptGenerator() {
               </Card>
             </div>
           </div>
+
+          {/* Mobile Summary - Only show on mobile */}
+          <Card className="neumorphic mt-6 lg:hidden">
+            <CardContent className="p-4">
+              <div className="text-center">
+                <h4 className="font-semibold mb-2 text-sm">Selection Summary</h4>
+                <div className="text-xs text-muted-foreground">
+                  {Object.values(selectedSettings).reduce((total, options) => total + options.length, 0)} options selected across {Object.keys(selectedSettings).length} parameters
+                </div>
+              </div>
+            </CardContent>
+          </Card>
         </main>
         <Footer />
       </div>
