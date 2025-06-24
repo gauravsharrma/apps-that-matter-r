@@ -145,6 +145,13 @@ export class MemStorage implements IStorage {
         featured: 0
       },
       {
+        name: "AI Prompt Generator",
+        description: "Generate comprehensive prompt settings for ChatGPT, Gemini, and other LLMs with 20+ customizable parameters.",
+        category: "AI Tools",
+        icon: "robot",
+        featured: 1
+      },
+      {
         name: "Task Prioritizer",
         description: "Organize and prioritize tasks using proven methodologies like Eisenhower Matrix and GTD principles.",
         category: "Productivity",

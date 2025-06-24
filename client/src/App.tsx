@@ -14,6 +14,7 @@ import CurrencyConverter from "@/pages/currency-converter";
 import TextFormatter from "@/pages/text-formatter";
 import ColorPaletteGenerator from "@/pages/color-palette-generator";
 import WaterIntakeTracker from "@/pages/water-intake-tracker";
+import AIPromptGenerator from "@/pages/ai-prompt-generator";
 
 function Router() {
   return (
@@ -28,6 +29,7 @@ function Router() {
       <Route path="/text-formatter" component={TextFormatter} />
       <Route path="/color-palette-generator" component={ColorPaletteGenerator} />
       <Route path="/water-intake-tracker" component={WaterIntakeTracker} />
+      <Route path="/ai-prompt-generator" component={AIPromptGenerator} />
       <Route component={NotFound} />
     </Switch>
   );

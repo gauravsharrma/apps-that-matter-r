@@ -23,7 +23,8 @@ const getAppUrl = (appName: string): string => {
     "QR Code Generator": "/qr-code-generator",
     "Water Intake Tracker": "/water-intake-tracker",
     "AI Language Detector": "/ai-language-detector",
-    "Task Prioritizer": "/task-prioritizer"
+    "Task Prioritizer": "/task-prioritizer",
+    "AI Prompt Generator": "/ai-prompt-generator"
   };
   return urlMap[appName] || "#";
 };
