@@ -7,21 +7,27 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import { isUnauthorizedError } from "@/lib/authUtils";
-import { 
-  Plus, 
-  Search, 
-  Edit3, 
-  Trash2, 
-  ExternalLink, 
+import {
+  Plus,
+  Search,
+  Edit3,
+  Trash2,
+  ExternalLink,
   Calendar,
   Tag,
   Palette,
-  X
+  X,
 } from "lucide-react";
 import { format } from "date-fns";
 
@@ -56,7 +62,7 @@ export default function PostItNotes() {
     title: "",
     content: "",
     tags: [] as string[],
-    backgroundColor: "#fef3c7"
+    backgroundColor: "#fef3c7",
   });
   const [tagInput, setTagInput] = useState("");
 
@@ -86,30 +92,40 @@ export default function PostItNotes() {
   // Fetch notes only if authenticated
   const { data: notes = [], isLoading } = useQuery({
     queryKey: searchQuery ? ["/api/notes/search", searchQuery] : ["/api/notes"],
-    queryFn: () => searchQuery 
-      ? apiRequest(`/api/notes/search?q=${encodeURIComponent(searchQuery)}`)
-      : apiRequest("/api/notes"),
+    queryFn: async () => {
+      const url = searchQuery
+        ? `/api/notes/search?q=${encodeURIComponent(searchQuery)}`
+        : "/api/notes";
+      const res = await apiRequest("GET", url);
+      return (await res.json()) as Note[];
+    },
     enabled: isAuthenticated,
   });
 
   // Fetch available tags for autocomplete only if authenticated
   const { data: availableTags = [] } = useQuery({
     queryKey: ["/api/notes/tags"],
+    queryFn: async () => {
+      const res = await apiRequest("GET", "/api/notes/tags");
+      return (await res.json()) as string[];
+    },
     enabled: isAuthenticated,
   });
 
   // Create note mutation
   const createMutation = useMutation({
-    mutationFn: (note: any) => apiRequest("/api/notes", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(note),
-    }),
+    mutationFn: (note: any) =>
+      apiRequest("POST", "/api/notes", note).then((res) => res.json()),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/notes"] });
       queryClient.invalidateQueries({ queryKey: ["/api/notes/tags"] });
       setIsCreateOpen(false);
-      setNewNote({ title: "", content: "", tags: [], backgroundColor: "#fef3c7" });
+      setNewNote({
+        title: "",
+        content: "",
+        tags: [],
+        backgroundColor: "#fef3c7",
+      });
       toast({ title: "Note created successfully!" });
     },
     onError: (error) => {
@@ -119,7 +135,7 @@ export default function PostItNotes() {
           description: "Please sign in to create notes.",
           variant: "destructive",
         });
-        setTimeout(() => window.location.href = "/api/login", 500);
+        setTimeout(() => (window.location.href = "/api/login"), 500);
         return;
       }
       toast({
@@ -132,11 +148,8 @@ export default function PostItNotes() {
 
   // Update note mutation
   const updateMutation = useMutation({
-    mutationFn: ({ id, ...updates }: any) => apiRequest(`/api/notes/${id}`, {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(updates),
-    }),
+    mutationFn: ({ id, ...updates }: any) =>
+      apiRequest("PUT", `/api/notes/${id}`, updates).then((res) => res.json()),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/notes"] });
       queryClient.invalidateQueries({ queryKey: ["/api/notes/tags"] });
@@ -150,7 +163,7 @@ export default function PostItNotes() {
           description: "Please sign in to update notes.",
           variant: "destructive",
         });
-        setTimeout(() => window.location.href = "/api/login", 500);
+        setTimeout(() => (window.location.href = "/api/login"), 500);
         return;
       }
       toast({
@@ -163,9 +176,7 @@ export default function PostItNotes() {
 
   // Delete note mutation
   const deleteMutation = useMutation({
-    mutationFn: (id: number) => apiRequest(`/api/notes/${id}`, {
-      method: "DELETE",
-    }),
+    mutationFn: (id: number) => apiRequest("DELETE", `/api/notes/${id}`),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/notes"] });
       queryClient.invalidateQueries({ queryKey: ["/api/notes/tags"] });
@@ -178,7 +189,7 @@ export default function PostItNotes() {
           description: "Please sign in to delete notes.",
           variant: "destructive",
         });
-        setTimeout(() => window.location.href = "/api/login", 500);
+        setTimeout(() => (window.location.href = "/api/login"), 500);
         return;
       }
       toast({
@@ -220,14 +231,14 @@ export default function PostItNotes() {
       if (!editingNote.tags.includes(trimmedTag)) {
         setEditingNote({
           ...editingNote,
-          tags: [...editingNote.tags, trimmedTag]
+          tags: [...editingNote.tags, trimmedTag],
         });
       }
     } else {
       if (!newNote.tags.includes(trimmedTag)) {
         setNewNote({
           ...newNote,
-          tags: [...newNote.tags, trimmedTag]
+          tags: [...newNote.tags, trimmedTag],
         });
       }
     }
@@ -238,12 +249,12 @@ export default function PostItNotes() {
     if (isEditing && editingNote) {
       setEditingNote({
         ...editingNote,
-        tags: editingNote.tags.filter(tag => tag !== tagToRemove)
+        tags: editingNote.tags.filter((tag) => tag !== tagToRemove),
       });
     } else {
       setNewNote({
         ...newNote,
-        tags: newNote.tags.filter(tag => tag !== tagToRemove)
+        tags: newNote.tags.filter((tag) => tag !== tagToRemove),
       });
     }
   };
@@ -309,18 +320,23 @@ export default function PostItNotes() {
               <h1 class="note-title">${note.title}</h1>
               <div class="note-meta">
                 Created: ${format(new Date(note.createdAt), "MMM dd, yyyy 'at' h:mm a")}
-                ${note.createdAt !== note.updatedAt ? 
-                  ` • Updated: ${format(new Date(note.updatedAt), "MMM dd, yyyy 'at' h:mm a")}` : 
-                  ""
+                ${
+                  note.createdAt !== note.updatedAt
+                    ? ` • Updated: ${format(new Date(note.updatedAt), "MMM dd, yyyy 'at' h:mm a")}`
+                    : ""
                 }
               </div>
             </div>
             <div class="note-content">${note.content}</div>
-            ${note.tags.length > 0 ? `
+            ${
+              note.tags.length > 0
+                ? `
               <div class="note-tags">
-                ${note.tags.map(tag => `<span class="tag">${tag}</span>`).join("")}
+                ${note.tags.map((tag) => `<span class="tag">${tag}</span>`).join("")}
               </div>
-            ` : ""}
+            `
+                : ""
+            }
           </body>
         </html>
       `);
@@ -338,20 +354,27 @@ export default function PostItNotes() {
 
   return (
     <>
-      <SEOHead 
+      <SEOHead
         title="Post-it Notes - AppsThatMatter"
         description="Create, organize, and manage digital sticky notes with tags, colors, and timestamps for better productivity."
         keywords="notes, sticky notes, post-it, productivity, organization, tags"
       />
-      <div className="min-h-screen" style={{ backgroundColor: 'var(--neo-bg)' }}>
+      <div
+        className="min-h-screen"
+        style={{ backgroundColor: "var(--neo-bg)" }}
+      >
         <Header />
         <main className="container max-w-7xl mx-auto px-4 py-8">
           <div className="text-center mb-8">
             <div className="neumorphic-inset w-16 h-16 mx-auto mb-4 flex items-center justify-center rounded-xl">
               <Plus className="h-8 w-8 text-primary" />
             </div>
-            <h1 className="text-3xl font-bold mb-2 text-foreground">Post-it Notes</h1>
-            <p className="text-muted-foreground">Create and organize your digital sticky notes</p>
+            <h1 className="text-3xl font-bold mb-2 text-foreground">
+              Post-it Notes
+            </h1>
+            <p className="text-muted-foreground">
+              Create and organize your digital sticky notes
+            </p>
           </div>
 
           {/* Actions Bar */}
@@ -381,25 +404,33 @@ export default function PostItNotes() {
                   <Input
                     placeholder="Note title..."
                     value={newNote.title}
-                    onChange={(e) => setNewNote({ ...newNote, title: e.target.value })}
+                    onChange={(e) =>
+                      setNewNote({ ...newNote, title: e.target.value })
+                    }
                     className="neumorphic"
                   />
                   <Textarea
                     placeholder="Write your note content..."
                     value={newNote.content}
-                    onChange={(e) => setNewNote({ ...newNote, content: e.target.value })}
+                    onChange={(e) =>
+                      setNewNote({ ...newNote, content: e.target.value })
+                    }
                     className="neumorphic min-h-32"
                   />
-                  
+
                   {/* Tags */}
                   <div className="space-y-2">
                     <label className="text-sm font-medium">Tags</label>
                     <div className="flex flex-wrap gap-2 mb-2">
                       {newNote.tags.map((tag) => (
-                        <Badge key={tag} variant="secondary" className="flex items-center gap-1">
+                        <Badge
+                          key={tag}
+                          variant="secondary"
+                          className="flex items-center gap-1"
+                        >
                           {tag}
-                          <X 
-                            className="h-3 w-3 cursor-pointer" 
+                          <X
+                            className="h-3 w-3 cursor-pointer"
                             onClick={() => handleRemoveTag(tag)}
                           />
                         </Badge>
@@ -419,8 +450,8 @@ export default function PostItNotes() {
                           <option key={tag} value={tag} />
                         ))}
                       </datalist>
-                      <Button 
-                        type="button" 
+                      <Button
+                        type="button"
                         onClick={() => handleAddTag(tagInput)}
                         className="neumorphic-button"
                       >
@@ -431,27 +462,36 @@ export default function PostItNotes() {
 
                   {/* Color Picker */}
                   <div className="space-y-2">
-                    <label className="text-sm font-medium">Background Color</label>
+                    <label className="text-sm font-medium">
+                      Background Color
+                    </label>
                     <div className="flex flex-wrap gap-2">
                       {COLOR_OPTIONS.map((color) => (
                         <button
                           key={color}
                           type="button"
                           className={`w-8 h-8 rounded-full border-2 ${
-                            newNote.backgroundColor === color ? 'border-primary' : 'border-gray-300'
+                            newNote.backgroundColor === color
+                              ? "border-primary"
+                              : "border-gray-300"
                           }`}
                           style={{ backgroundColor: color }}
-                          onClick={() => setNewNote({ ...newNote, backgroundColor: color })}
+                          onClick={() =>
+                            setNewNote({ ...newNote, backgroundColor: color })
+                          }
                         />
                       ))}
                     </div>
                   </div>
 
                   <div className="flex justify-end gap-2">
-                    <Button variant="outline" onClick={() => setIsCreateOpen(false)}>
+                    <Button
+                      variant="outline"
+                      onClick={() => setIsCreateOpen(false)}
+                    >
                       Cancel
                     </Button>
-                    <Button 
+                    <Button
                       onClick={handleCreateNote}
                       disabled={createMutation.isPending}
                       className="neumorphic-button"
@@ -471,16 +511,25 @@ export default function PostItNotes() {
                 <Plus className="h-8 w-8 text-muted-foreground animate-pulse" />
               </div>
               <h3 className="text-lg font-semibold mb-2">Loading...</h3>
-              <p className="text-muted-foreground">Checking authentication status...</p>
+              <p className="text-muted-foreground">
+                Checking authentication status...
+              </p>
             </div>
           ) : !isAuthenticated ? (
             <div className="text-center py-12">
               <div className="neumorphic-inset w-16 h-16 mx-auto mb-4 flex items-center justify-center rounded-xl">
                 <Plus className="h-8 w-8 text-muted-foreground" />
               </div>
-              <h3 className="text-lg font-semibold mb-2">Authentication Required</h3>
-              <p className="text-muted-foreground mb-4">Please sign in to access your notes</p>
-              <Button onClick={() => window.location.href = "/api/login"} className="neumorphic-button">
+              <h3 className="text-lg font-semibold mb-2">
+                Authentication Required
+              </h3>
+              <p className="text-muted-foreground mb-4">
+                Please sign in to access your notes
+              </p>
+              <Button
+                onClick={() => (window.location.href = "/api/login")}
+                className="neumorphic-button"
+              >
                 Sign In
               </Button>
             </div>
@@ -497,10 +546,15 @@ export default function PostItNotes() {
               </div>
               <h3 className="text-lg font-semibold mb-2">No notes yet</h3>
               <p className="text-muted-foreground mb-4">
-                {searchQuery ? "No notes match your search." : "Create your first note to get started!"}
+                {searchQuery
+                  ? "No notes match your search."
+                  : "Create your first note to get started!"}
               </p>
               {!searchQuery && (
-                <Button onClick={() => setIsCreateOpen(true)} className="neumorphic-button">
+                <Button
+                  onClick={() => setIsCreateOpen(true)}
+                  className="neumorphic-button"
+                >
                   <Plus className="h-4 w-4 mr-2" />
                   Create Note
                 </Button>
@@ -509,8 +563,8 @@ export default function PostItNotes() {
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
               {notes.map((note: Note) => (
-                <Card 
-                  key={note.id} 
+                <Card
+                  key={note.id}
                   className="neumorphic transition-transform hover:scale-105 cursor-pointer"
                   style={{ backgroundColor: note.backgroundColor }}
                 >
@@ -560,11 +614,15 @@ export default function PostItNotes() {
                     <p className="text-gray-700 text-sm mb-4 line-clamp-4">
                       {note.content}
                     </p>
-                    
+
                     {note.tags.length > 0 && (
                       <div className="flex flex-wrap gap-1 mb-3">
                         {note.tags.slice(0, 3).map((tag) => (
-                          <Badge key={tag} variant="secondary" className="text-xs">
+                          <Badge
+                            key={tag}
+                            variant="secondary"
+                            className="text-xs"
+                          >
                             {tag}
                           </Badge>
                         ))}
@@ -587,7 +645,10 @@ export default function PostItNotes() {
           )}
 
           {/* Edit Note Dialog */}
-          <Dialog open={!!editingNote} onOpenChange={() => setEditingNote(null)}>
+          <Dialog
+            open={!!editingNote}
+            onOpenChange={() => setEditingNote(null)}
+          >
             <DialogContent className="max-w-2xl">
               <DialogHeader>
                 <DialogTitle>Edit Note</DialogTitle>
@@ -597,25 +658,36 @@ export default function PostItNotes() {
                   <Input
                     placeholder="Note title..."
                     value={editingNote.title}
-                    onChange={(e) => setEditingNote({ ...editingNote, title: e.target.value })}
+                    onChange={(e) =>
+                      setEditingNote({ ...editingNote, title: e.target.value })
+                    }
                     className="neumorphic"
                   />
                   <Textarea
                     placeholder="Write your note content..."
                     value={editingNote.content}
-                    onChange={(e) => setEditingNote({ ...editingNote, content: e.target.value })}
+                    onChange={(e) =>
+                      setEditingNote({
+                        ...editingNote,
+                        content: e.target.value,
+                      })
+                    }
                     className="neumorphic min-h-32"
                   />
-                  
+
                   {/* Tags */}
                   <div className="space-y-2">
                     <label className="text-sm font-medium">Tags</label>
                     <div className="flex flex-wrap gap-2 mb-2">
                       {editingNote.tags.map((tag) => (
-                        <Badge key={tag} variant="secondary" className="flex items-center gap-1">
+                        <Badge
+                          key={tag}
+                          variant="secondary"
+                          className="flex items-center gap-1"
+                        >
                           {tag}
-                          <X 
-                            className="h-3 w-3 cursor-pointer" 
+                          <X
+                            className="h-3 w-3 cursor-pointer"
                             onClick={() => handleRemoveTag(tag, true)}
                           />
                         </Badge>
@@ -635,8 +707,8 @@ export default function PostItNotes() {
                           <option key={tag} value={tag} />
                         ))}
                       </datalist>
-                      <Button 
-                        type="button" 
+                      <Button
+                        type="button"
                         onClick={() => handleAddTag(tagInput, true)}
                         className="neumorphic-button"
                       >
@@ -647,27 +719,39 @@ export default function PostItNotes() {
 
                   {/* Color Picker */}
                   <div className="space-y-2">
-                    <label className="text-sm font-medium">Background Color</label>
+                    <label className="text-sm font-medium">
+                      Background Color
+                    </label>
                     <div className="flex flex-wrap gap-2">
                       {COLOR_OPTIONS.map((color) => (
                         <button
                           key={color}
                           type="button"
                           className={`w-8 h-8 rounded-full border-2 ${
-                            editingNote.backgroundColor === color ? 'border-primary' : 'border-gray-300'
+                            editingNote.backgroundColor === color
+                              ? "border-primary"
+                              : "border-gray-300"
                           }`}
                           style={{ backgroundColor: color }}
-                          onClick={() => setEditingNote({ ...editingNote, backgroundColor: color })}
+                          onClick={() =>
+                            setEditingNote({
+                              ...editingNote,
+                              backgroundColor: color,
+                            })
+                          }
                         />
                       ))}
                     </div>
                   </div>
 
                   <div className="flex justify-end gap-2">
-                    <Button variant="outline" onClick={() => setEditingNote(null)}>
+                    <Button
+                      variant="outline"
+                      onClick={() => setEditingNote(null)}
+                    >
                       Cancel
                     </Button>
-                    <Button 
+                    <Button
                       onClick={handleUpdateNote}
                       disabled={updateMutation.isPending}
                       className="neumorphic-button"
