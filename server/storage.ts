@@ -13,6 +13,8 @@ import {
   type InsertTrial,
 } from "@shared/schema";
 import { db } from "./db";
+
+const database = db!;
 import { eq, ilike, or, desc, and } from "drizzle-orm";
 
 // Interface for storage operations
@@ -45,12 +47,12 @@ export class DatabaseStorage implements IStorage {
   // (IMPORTANT) these user operations are mandatory for Replit Auth.
 
   async getUser(id: string): Promise<User | undefined> {
-    const [user] = await db.select().from(users).where(eq(users.id, id));
+    const [user] = await database.select().from(users).where(eq(users.id, id));
     return user;
   }
 
   async upsertUser(userData: UpsertUser): Promise<User> {
-    const [user] = await db
+    const [user] = await database
       .insert(users)
       .values(userData)
       .onConflictDoUpdate({
@@ -63,13 +65,76 @@ export class DatabaseStorage implements IStorage {
       .returning();
     return user;
   }
-@@ -122,54 +130,91 @@ export class DatabaseStorage implements IStorage {
+
+  async getAllApps(): Promise<App[]> {
+    return await database.select().from(apps);
+  }
+
+  async getAppsByCategory(category: string): Promise<App[]> {
+    return await database.select().from(apps).where(eq(apps.category, category));
+  }
+
+  async searchApps(query: string): Promise<App[]> {
+    return await database
+      .select()
+      .from(apps)
+      .where(
+        or(
+          ilike(apps.name, `%${query}%`),
+          ilike(apps.description, `%${query}%`)
+        )
+      );
+  }
+
+  // Note operations
+  async getUserNotes(userId: string): Promise<Note[]> {
+    return await database
+      .select()
+      .from(notes)
+      .where(eq(notes.userId, userId))
+      .orderBy(desc(notes.updatedAt));
+  }
+
+  async getNote(id: number, userId: string): Promise<Note | undefined> {
+    const [note] = await database
+      .select()
+      .from(notes)
+      .where(and(eq(notes.id, id), eq(notes.userId, userId)));
+    return note;
+  }
+
+  async createNote(note: InsertNote): Promise<Note> {
+    const [newNote] = await database
+      .insert(notes)
+      .values({
+        ...note,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      })
+      .returning();
+    return newNote;
+  }
+
+  async updateNote(id: number, userId: string, updates: Partial<InsertNote>): Promise<Note> {
+    const [updatedNote] = await database
+      .update(notes)
+      .set({
+        ...updates,
+        updatedAt: new Date(),
+      })
+      .where(and(eq(notes.id, id), eq(notes.userId, userId)))
+      .returning();
+    return updatedNote;
+  }
+
+  async deleteNote(id: number, userId: string): Promise<void> {
+    await database
       .delete(notes)
       .where(and(eq(notes.id, id), eq(notes.userId, userId)));
   }
 
   async searchUserNotes(userId: string, query: string): Promise<Note[]> {
-    return await db
+    return await database
       .select()
       .from(notes)
       .where(
@@ -85,18 +150,18 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getUserTags(userId: string): Promise<string[]> {
-    const userNotes = await db
+    const userNotes = await database
       .select({ tags: notes.tags })
       .from(notes)
       .where(eq(notes.userId, userId));
 
     const allTags = userNotes.flatMap(note => note.tags || []);
-    return [...new Set(allTags)];
+    return Array.from(new Set(allTags));
   }
 
   // Trial operations
   async getUserTrials(userId: string): Promise<Trial[]> {
-    return await db
+    return await database
       .select()
       .from(trials)
       .where(eq(trials.userId, userId))
@@ -104,7 +169,7 @@ export class DatabaseStorage implements IStorage {
   }
 
   async createTrial(trialData: InsertTrial): Promise<Trial> {
-    const [trial] = await db
+    const [trial] = await database
       .insert(trials)
       .values({
         ...trialData,
@@ -115,8 +180,12 @@ export class DatabaseStorage implements IStorage {
     return trial;
   }
 
-  async updateTrial(id: number, userId: string, updates: Partial<InsertTrial>): Promise<Trial> {
-    const [trial] = await db
+  async updateTrial(
+    id: number,
+    userId: string,
+    updates: Partial<InsertTrial>
+  ): Promise<Trial> {
+    const [trial] = await database
       .update(trials)
       .set({
         ...updates,
@@ -128,7 +197,7 @@ export class DatabaseStorage implements IStorage {
   }
 
   async deleteTrial(id: number, userId: string): Promise<void> {
-    await db.delete(trials).where(and(eq(trials.id, id), eq(trials.userId, userId)));
+    await database.delete(trials).where(and(eq(trials.id, id), eq(trials.userId, userId)));
   }
 }
 
@@ -155,7 +224,50 @@ export class MemStorage implements IStorage {
         icon: "calculator",
         featured: true
       },
-@@ -220,95 +265,105 @@ export class MemStorage implements IStorage {
+      {
+        name: "BMI Calculator",
+        description: "Calculate your Body Mass Index and get health recommendations based on WHO guidelines and standards.",
+        category: "Health",
+        icon: "heartbeat",
+        featured: true
+      },
+      {
+        name: "SIP Calculator",
+        description: "Plan your systematic investment portfolio with compound interest calculations and goal-based planning.",
+        category: "Finance",
+        icon: "chart-line",
+        featured: false
+      },
+      {
+        name: "Text Formatter",
+        description: "Format, clean, and transform text with multiple options including case conversion and special character handling.",
+        category: "Utilities",
+        icon: "file-alt",
+        featured: false
+      },
+      {
+        name: "Color Palette Generator",
+        description: "Generate beautiful color palettes for your design projects with accessibility and contrast checking.",
+        category: "Utilities",
+        icon: "palette",
+        featured: false
+      },
+      {
+        name: "Pomodoro Timer",
+        description: "Boost productivity with customizable focus sessions, break reminders, and detailed time tracking analytics.",
+        category: "Productivity",
+        icon: "clock",
+        featured: false
+      },
+      {
+        name: "Currency Converter",
+        description: "Convert between global currencies with real-time exchange rates and historical trend analysis.",
+        category: "Finance",
+        icon: "coins",
+        featured: false
+      },
+      {
+        name: "QR Code Generator",
         description: "Generate QR codes for URLs, text, WiFi passwords, and more with customizable styling options.",
         category: "Utilities",
         icon: "qrcode",
@@ -181,61 +293,7 @@ export class MemStorage implements IStorage {
         category: "Productivity",
         icon: "sticky-note",
         featured: true
-      },
-      {
-        name: "Trial Tracker",
-        description: "Keep a record of free trials with start and end dates and filter by upcoming expirations.",
-        category: "Productivity",
-        icon: "clock",
-        featured: false
-      }
-    ];
-
-    sampleApps.forEach(app => {
-      const id = this.currentAppId++;
-      this.apps.set(id, { ...app, id, createdAt: new Date() });
-    });
-  }
-
-  async getUser(id: string): Promise<User | undefined> {
-    return this.users.get(id);
-  }
-
-  async upsertUser(userData: UpsertUser): Promise<User> {
-    const user: User = {
-      ...userData,
-      createdAt: this.users.get(userData.id!)?.createdAt || new Date(),
-      updatedAt: new Date()
-    };
-    this.users.set(userData.id!, user);
-    return user;
-  }
-
-  async getAllApps(): Promise<App[]> {
-    return Array.from(this.apps.values());
-  }
-
-  async getAppsByCategory(category: string): Promise<App[]> {
-    return Array.from(this.apps.values()).filter(app => 
-      app.category.toLowerCase() === category.toLowerCase()
-    );
-  }
-
-  async searchApps(query: string): Promise<App[]> {
-    const lowercaseQuery = query.toLowerCase();
-    return Array.from(this.apps.values()).filter(app => 
-      app.name.toLowerCase().includes(lowercaseQuery) ||
-      app.description.toLowerCase().includes(lowercaseQuery) ||
-      app.category.toLowerCase().includes(lowercaseQuery)
-    );
-  }
-
-  // Note operations for memory storage
-  private notes: Map<number, Note> = new Map();
-  private currentNoteId: number = 1;
-  // Trial operations for memory storage
-  private trials: Map<number, Trial> = new Map();
-  private currentTrialId: number = 1;
+@@ -239,94 +351,105 @@ export class MemStorage implements IStorage {
 
   async getUserNotes(userId: string): Promise<Note[]> {
     return Array.from(this.notes.values())
@@ -261,7 +319,18 @@ export class MemStorage implements IStorage {
   }
 
   async updateNote(id: number, userId: string, updates: Partial<InsertNote>): Promise<Note> {
-@@ -327,28 +382,68 @@ export class MemStorage implements IStorage {
+    const existingNote = this.notes.get(id);
+    if (!existingNote || existingNote.userId !== userId) {
+      throw new Error('Note not found');
+    }
+
+    const updatedNote: Note = {
+      ...existingNote,
+      ...updates,
+      updatedAt: new Date(),
+    };
+    this.notes.set(id, updatedNote);
+    return updatedNote;
   }
 
   async deleteNote(id: number, userId: string): Promise<void> {
@@ -285,7 +354,7 @@ export class MemStorage implements IStorage {
   async getUserTags(userId: string): Promise<string[]> {
     const userNotes = Array.from(this.notes.values()).filter(note => note.userId === userId);
     const allTags = userNotes.flatMap(note => note.tags || []);
-    return [...new Set(allTags)];
+    return Array.from(new Set(allTags));
   }
 
   // Trial operations
