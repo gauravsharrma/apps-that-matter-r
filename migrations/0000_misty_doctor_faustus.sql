@@ -51,3 +51,7 @@ CREATE INDEX IF NOT EXISTS "IDX_session_expire" ON "sessions" USING btree ("expi
 ALTER TABLE "apps" ADD COLUMN IF NOT EXISTS "created_at" timestamp DEFAULT now();
 ALTER TABLE "users" ADD COLUMN IF NOT EXISTS "created_at" timestamp DEFAULT now();
 ALTER TABLE "users" ADD COLUMN IF NOT EXISTS "updated_at" timestamp DEFAULT now();
+ALTER TABLE "users" ADD COLUMN IF NOT EXISTS "email" varchar;
+ALTER TABLE "users" ADD COLUMN IF NOT EXISTS "first_name" varchar;
+ALTER TABLE "users" ADD COLUMN IF NOT EXISTS "last_name" varchar;
+ALTER TABLE "users" ADD COLUMN IF NOT EXISTS "profile_image_url" varchar;
