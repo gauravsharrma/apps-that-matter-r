@@ -8,7 +8,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   await setupAuth(app);
 
   // Auth routes
-  app.get('/api/auth/user', isAuthenticated, async (req: any, res) => {
+  app.get("/api/auth/user", isAuthenticated, async (req: any, res) => {
     try {
       const user = req.user;
       res.json(user);
@@ -144,6 +144,54 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error deleting note:", error);
       res.status(500).json({ message: "Failed to delete note" });
+    }
+  });
+
+  // Trial routes
+  app.get("/api/trials", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const trials = await storage.getUserTrials(userId);
+      res.json(trials);
+    } catch (error) {
+      console.error("Error fetching trials:", error);
+      res.status(500).json({ message: "Failed to fetch trials" });
+    }
+  });
+
+  app.post("/api/trials", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const data = { ...req.body, userId };
+      const trial = await storage.createTrial(data);
+      res.status(201).json(trial);
+    } catch (error) {
+      console.error("Error creating trial:", error);
+      res.status(500).json({ message: "Failed to create trial" });
+    }
+  });
+
+  app.put("/api/trials/:id", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const trialId = parseInt(req.params.id);
+      const trial = await storage.updateTrial(trialId, userId, req.body);
+      res.json(trial);
+    } catch (error) {
+      console.error("Error updating trial:", error);
+      res.status(500).json({ message: "Failed to update trial" });
+    }
+  });
+
+  app.delete("/api/trials/:id", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const trialId = parseInt(req.params.id);
+      await storage.deleteTrial(trialId, userId);
+      res.status(204).send();
+    } catch (error) {
+      console.error("Error deleting trial:", error);
+      res.status(500).json({ message: "Failed to delete trial" });
     }
   });
 

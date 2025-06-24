@@ -52,7 +52,9 @@ export const notes = pgTable("notes", {
   title: varchar("title", { length: 200 }).notNull(),
   content: text("content").notNull(),
   tags: varchar("tags").array().default([]),
-  backgroundColor: varchar("background_color", { length: 7 }).default("#fef3c7"),
+  backgroundColor: varchar("background_color", { length: 7 }).default(
+    "#fef3c7",
+  ),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });
@@ -68,9 +70,27 @@ export const insertNoteSchema = createInsertSchema(notes).omit({
   updatedAt: true,
 });
 
+export const trials = pgTable("trials", {
+  id: serial("id").primaryKey(),
+  userId: varchar("user_id").notNull(),
+  name: varchar("name", { length: 100 }).notNull(),
+  startDate: timestamp("start_date").notNull(),
+  endDate: timestamp("end_date").notNull(),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+export const insertTrialSchema = createInsertSchema(trials).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
 export type UpsertUser = typeof users.$inferInsert;
 export type User = typeof users.$inferSelect;
 export type InsertApp = z.infer<typeof insertAppSchema>;
 export type App = typeof apps.$inferSelect;
 export type InsertNote = z.infer<typeof insertNoteSchema>;
 export type Note = typeof notes.$inferSelect;
+export type InsertTrial = z.infer<typeof insertTrialSchema>;
+export type Trial = typeof trials.$inferSelect;

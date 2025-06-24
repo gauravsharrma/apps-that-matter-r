@@ -21,6 +21,7 @@ import ColorPaletteGenerator from "@/pages/color-palette-generator";
 import WaterIntakeTracker from "@/pages/water-intake-tracker";
 import AIPromptGenerator from "@/pages/ai-prompt-generator";
 import PostItNotes from "@/pages/post-it-notes";
+import TrialTracker from "@/pages/trial-tracker";
 
 function AppContent() {
   const { settings } = useUserSettings();
@@ -38,10 +39,14 @@ function AppContent() {
         <Route path="/qr-code-generator" component={QRCodeGenerator} />
         <Route path="/currency-converter" component={CurrencyConverter} />
         <Route path="/text-formatter" component={TextFormatter} />
-        <Route path="/color-palette-generator" component={ColorPaletteGenerator} />
+        <Route
+          path="/color-palette-generator"
+          component={ColorPaletteGenerator}
+        />
         <Route path="/water-intake-tracker" component={WaterIntakeTracker} />
         <Route path="/ai-prompt-generator" component={AIPromptGenerator} />
         <Route path="/post-it-notes" component={PostItNotes} />
+        <Route path="/trial-tracker" component={TrialTracker} />
         <Route component={NotFound} />
       </Switch>
       <ScrollNavigation position={settings.scrollButtonPosition} />

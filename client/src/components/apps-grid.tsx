@@ -25,7 +25,8 @@ const getAppUrl = (appName: string): string => {
     "AI Language Detector": "/ai-language-detector",
     "Task Prioritizer": "/task-prioritizer",
     "AI Prompt Generator": "/ai-prompt-generator",
-    "Post-it Notes": "/post-it-notes"
+    "Post-it Notes": "/post-it-notes",
+    "Trial Tracker": "/trial-tracker"
   };
   return urlMap[appName] || "#";
 };
